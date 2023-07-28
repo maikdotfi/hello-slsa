@@ -1,9 +1,19 @@
 package main
 
 import (
-        "fmt"
+	"fmt"
+
+	cowsay "github.com/Code-Hex/Neo-cowsay/v2"
 )
 
 func main() {
-        fmt.Println("Hello SLSA!")
+	say, err := cowsay.Say(
+		"Hello SLSA!",
+		cowsay.Type("default"),
+		cowsay.BallonWidth(40),
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(say)
 }
