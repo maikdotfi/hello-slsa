@@ -35,6 +35,10 @@ jobs:
         tag=$(echo ${{ github.ref }} | cut -d'/' -f3)
 
         echo "${{ github.token }}" | ko login ghcr.io --username ${{ github.actor }} --password-stdin
+
+        # apparently ko does not do this, so fetch deps before build
+        go mod tidy
+
         # Build & push the image. Save the image name.
         # don't let ko upload the SBOM, we want to do it differently
         image_and_digest=$(ko build --tags="${tag}" --bare --sbom=none .)
