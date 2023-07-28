@@ -15,35 +15,33 @@ jobs:
       packages: write
     outputs:
       digest: ${{ steps.build.outputs.digest }}
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 #v3.5.3
 
-  steps:
-  - name: checkout repo
-    uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 #v3.5.3
+    - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 #v4.0.1
+      with:
+        go-version: '1.19'
 
-  - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 #v4.0.1
-    with:
-      go-version: '1.19'
+    # setup-ko could do KO_DOCKER_REPO and login for us, but I prefer to show it explicitly
+    - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa #v0.6
+      with:
+        version: '0.14.1'
 
-  # setup-ko could do KO_DOCKER_REPO and login for us, but I prefer to show it explicitly
-  - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa #v0.6
-    with:
-      version: '0.14.1'
+    - name: Build and push with ko
+      id: build
+      if: startsWith(github.ref, 'refs/tags/') # just to be safe, don't push if it's not a tag
+      run: |
+        tag=$(echo ${{ github.ref }} | cut -d'/' -f3)
 
-  - name: Build and push with ko
-    id: build
-    if: startsWith(github.ref, 'refs/tags/') # just to be safe, don't push if it's not a tag
-    run: |
-      tag=$(echo ${{ github.ref }} | cut -d'/' -f3)
+        echo "${{ github.token }}" | ko login ghcr.io --username ${{ github.actor }} --password-stdin
+        # Build & push the image. Save the image name.
+        # don't let ko upload the SBOM, we want to do it differently
+        image_and_digest=$(ko build --tags="${tag}" --bare --sbom=none .)
 
-      echo "${{ github.token }}" | ko login ghcr.io --username ${{ github.actor }} --password-stdin
-      
-      # Build & push the image. Save the image name.
-      # don't let ko upload the SBOM, we want to do it differently
-      image_and_digest=$(ko build --tags="${tag}" --bare --sbom=none .)
-
-      # Output the image name and digest so we can generate provenance.
-      digest=$(echo "${image_and_digest}" | cut -d'@' -f2)
-      echo "digest=$digest" >> "$GITHUB_OUTPUT"
+        # Output the image name and digest so we can generate provenance.
+        digest=$(echo "${image_and_digest}" | cut -d'@' -f2)
+        echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
   sign-image:
     runs-on: ubuntu-latest
