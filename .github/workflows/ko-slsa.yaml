@@ -74,7 +74,7 @@ jobs:
  
       - name: Sign image
         run: |
-          cosign sign "${image}@${digest}"
+          cosign sign "${image}@${digest}" --yes
 
   sbom:
     runs-on: ubuntu-latest
@@ -109,7 +109,7 @@ jobs:
         run: |
           syft "${image}@${digest}" --output spdx-json --file sbom.spdx.json
           # attach merged sbom as attestation (signed)
-          cosign attest --predicate sbom.spdx.json --type spdxjson "${image}@${digest}"
+          cosign attest --predicate sbom.spdx.json --type spdxjson "${image}@${digest}" --yes
 
   # slsa-github-generator creates and pushes the provenance attestation
   provenance:
