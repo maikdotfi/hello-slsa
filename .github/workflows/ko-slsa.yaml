@@ -26,7 +26,7 @@ jobs:
     # setup-ko could do KO_DOCKER_REPO and login for us, but I prefer to show it explicitly
     - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa #v0.6
       with:
-        version: '0.14.1'
+        version: 'v0.14.1'
 
     - name: Build and push with ko
       id: build
